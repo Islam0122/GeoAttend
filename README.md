@@ -69,7 +69,16 @@ Recharts (charts) · Leaflet + OpenStreetMap (maps).
 | `pages/employee` | My dashboard (check-in), My attendance, My schedule, My reports, Profile and location status |
 | `pages/staff` | Dashboard (KPIs and charts), Attendance, Monitoring, Approvals, Corrections, Anomalies, Reports (shared by Manager and Admin portals, scoped by the API) |
 | `pages/admin` | Employees, Departments, Offices and geofences, Schedules, Settings, Billing, Audit log |
+| `i18n/` | Interface languages: English, Русский, Кыргызча (`ru.ts`, `ky.ts`) |
 | `public/sw.js`, `public/manifest.webmanifest` | PWA |
+
+**Languages.** The UI is available in English, Russian and Kyrgyz. The language picker sits in the header
+(app, public site and sign-in screens); the choice is saved in the browser, and the first visit follows the
+browser language. Translation keys are the English source strings: wrap UI text in `t("…")` (or `msg("…")`
+for module-level constants translated later with `t()`), use `{name}` placeholders, and add the same key to
+`i18n/ru.ts` and `i18n/ky.ts`. `i18n/i18n.test.tsx` fails if a key used in the code is missing from either
+dictionary or a placeholder doesn't match. Known static API messages are translated on the client; the API
+receives `Accept-Language` but still answers in English.
 
 Portals by role: **Employee** (`/app/*`), **Manager** (`/app/team/*`), **Organization** for
 Owner/Admin/HR/Accountant (`/app/admin/*`). A manager who is also an employee sees both portals.

@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 /** Browser Geolocation API helpers. The server is the final authority; anything computed here is a preview. */
 
 export interface Fix {
@@ -44,19 +45,19 @@ export function watchPermission(cb: (s: PermissionState) => void): () => void {
 export function getPosition(options: PositionOptions = GEO_OPTIONS): Promise<Fix> {
   return new Promise((resolve, reject) => {
     if (typeof window !== "undefined" && window.isSecureContext === false) {
-      reject(new GeoError("INSECURE_CONTEXT", "Location requires HTTPS (or localhost)."));
+      reject(new GeoError("INSECURE_CONTEXT", t("Location requires HTTPS (or localhost).")));
       return;
     }
     if (!geolocationSupported()) {
-      reject(new GeoError("UNSUPPORTED", "This browser does not support location services."));
+      reject(new GeoError("UNSUPPORTED", t("This browser does not support location services.")));
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (p) => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy: p.coords.accuracy, timestamp: p.timestamp }),
       (err) => {
-        if (err.code === err.PERMISSION_DENIED) reject(new GeoError("PERMISSION_DENIED", "Location permission was denied."));
-        else if (err.code === err.TIMEOUT) reject(new GeoError("TIMEOUT", "Getting your location took too long. Try again near a window."));
-        else reject(new GeoError("POSITION_UNAVAILABLE", "Your location is currently unavailable. Check that location services are on."));
+        if (err.code === err.PERMISSION_DENIED) reject(new GeoError("PERMISSION_DENIED", t("Location permission was denied.")));
+        else if (err.code === err.TIMEOUT) reject(new GeoError("TIMEOUT", t("Getting your location took too long. Try again near a window.")));
+        else reject(new GeoError("POSITION_UNAVAILABLE", t("Your location is currently unavailable. Check that location services are on.")));
       },
       options,
     );

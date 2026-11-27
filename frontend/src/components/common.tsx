@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/misc";
 import { STATUS_LABEL, STATUS_TONE, titleCase } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { t } from "@/i18n";
 
 export function PageHeader({ title, description, actions }: { title: ReactNode; description?: ReactNode; actions?: ReactNode }) {
   return (
@@ -71,7 +72,7 @@ export function Field({ label, error, children, hint }: { label: string; error?:
       <span className="text-sm font-medium">{label}</span>
       {children}
       {hint && !error && <span className="block text-xs text-muted-foreground">{hint}</span>}
-      {error && <span className="block text-xs font-medium text-destructive">{error}</span>}
+      {error && <span className="block text-xs font-medium text-destructive">{t(error)}</span>}
     </label>
   );
 }

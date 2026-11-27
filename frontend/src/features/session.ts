@@ -3,6 +3,7 @@ import { queryClient } from "@/api/queryClient";
 import type { Me, TokenPair } from "@/api/types";
 import { useAuthStore } from "@/stores/auth";
 import { browserLabel, deviceId } from "@/lib/device";
+import { t } from "@/i18n";
 
 async function loadMe(): Promise<Me | null> {
   try {
@@ -69,9 +70,9 @@ export function readGoogleCallback(hash: string): { idToken: string; nonce: stri
   const saved = JSON.parse(sessionStorage.getItem("geoattend.google") ?? "null") as { nonce: string; state: string; intent: string; extra: Record<string, string> } | null;
   sessionStorage.removeItem("geoattend.google");
   if (p.get("error")) throw new Error(`Google sign-in cancelled (${p.get("error")})`);
-  if (!saved || p.get("state") !== saved.state) throw new Error("Sign-in session expired. Please try again.");
+  if (!saved || p.get("state") !== saved.state) throw new Error(t("Sign-in session expired. Please try again."));
   const idToken = p.get("id_token");
-  if (!idToken) throw new Error("Google did not return an ID token.");
+  if (!idToken) throw new Error(t("Google did not return an ID token."));
   return { idToken, nonce: saved.nonce, intent: saved.intent, extra: saved.extra };
 }
 

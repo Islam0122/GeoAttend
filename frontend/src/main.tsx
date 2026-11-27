@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 import { queryClient } from "@/api/queryClient";
 import { App } from "@/App";
+import { LanguageScope } from "@/i18n";
 import { OfflineSync } from "@/components/layout/OfflineSync";
 import { registerServiceWorker } from "@/features/pwa";
 import { bootstrapSession } from "@/features/session";
@@ -20,8 +21,10 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <App />
-        <OfflineSync />
+        <LanguageScope>
+          <App />
+          <OfflineSync />
+        </LanguageScope>
         <Toaster richColors position="top-center" />
       </BrowserRouter>
     </QueryClientProvider>

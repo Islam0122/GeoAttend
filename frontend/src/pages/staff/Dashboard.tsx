@@ -9,6 +9,7 @@ import { Input, NativeSelect } from "@/components/ui/input";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { addDays, fmtHours, fmtMinutes, fmtTime, todayIn } from "@/lib/format";
 import { useAuthStore } from "@/stores/auth";
+import { t } from "@/i18n";
 
 const C = { primary: "var(--color-primary)", warn: "var(--color-warning)", danger: "var(--color-destructive)", sky: "#0ea5e9", muted: "#94a3b8" };
 const axis = { fontSize: 12, stroke: "var(--color-muted-foreground)" };
@@ -50,29 +51,29 @@ export function Dashboard({ scope }: { scope: "org" | "team" }) {
 
   return (
     <>
-      <PageHeader title={scope === "team" ? "Team dashboard" : "Dashboard"} description={`Attendance analytics · ${tz}${day === today ? " · live" : ""}`}
+      <PageHeader title={scope === "team" ? t("Team dashboard") : t("Dashboard")} description={`${t("Attendance analytics")} · ${tz}${day === today ? ` · ${t("live")}` : ""}`}
         actions={<>
-          <Input type="date" value={day} max={today} onChange={(e) => setDay(e.target.value || today)} className="w-auto" aria-label="Date" />
-          <NativeSelect value={dept} onChange={(e) => setDept(e.target.value)} className="w-auto min-w-40" aria-label="Department">
-            <option value="">All departments</option>{depts.data?.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          <Input type="date" value={day} max={today} onChange={(e) => setDay(e.target.value || today)} className="w-auto" aria-label={t("Date")} />
+          <NativeSelect value={dept} onChange={(e) => setDept(e.target.value)} className="w-auto min-w-40" aria-label={t("Department")}>
+            <option value="">{t("All departments")}</option>{depts.data?.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </NativeSelect>
         </>} />
       <QueryState isLoading={k.isLoading} error={k.error} rows={2}>
         {s && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
-            <StatCard label="Total employees" value={s.total_employees} hint={`${s.scheduled_today} scheduled`} icon={<Users />} />
-            <StatCard label="Present" value={s.present} accent hint={s.inside_office ? `${s.inside_office} inside now` : undefined} icon={<UserCheck />} />
-            <StatCard label="Late" value={s.late} icon={<AlarmClock />} />
-            <StatCard label="Absent" value={s.absent} hint={s.location_unavailable ? `+${s.location_unavailable} location unavailable` : s.is_today ? "so far" : undefined} icon={<CalendarX2 />} />
-            <StatCard label="On leave" value={s.on_leave} icon={<Palmtree />} />
-            <StatCard label="Avg working hours" value={fmtHours(s.avg_working_minutes)} icon={<Clock3 />} />
-            <StatCard label="Overtime" value={fmtHours(s.overtime_minutes)} hint={s.unconfirmed ? `${s.unconfirmed} awaiting approval` : undefined} icon={<Hourglass />} />
+            <StatCard label={t("Total employees")} value={s.total_employees} hint={t("{n} scheduled", { n: s.scheduled_today })} icon={<Users />} />
+            <StatCard label={t("Present")} value={s.present} accent hint={s.inside_office ? t("{n} inside now", { n: s.inside_office }) : undefined} icon={<UserCheck />} />
+            <StatCard label={t("Late")} value={s.late} icon={<AlarmClock />} />
+            <StatCard label={t("Absent")} value={s.absent} hint={s.location_unavailable ? t("+{n} location unavailable", { n: s.location_unavailable }) : s.is_today ? t("so far") : undefined} icon={<CalendarX2 />} />
+            <StatCard label={t("On leave")} value={s.on_leave} icon={<Palmtree />} />
+            <StatCard label={t("Avg working hours")} value={fmtHours(s.avg_working_minutes)} icon={<Clock3 />} />
+            <StatCard label={t("Overtime")} value={fmtHours(s.overtime_minutes)} hint={s.unconfirmed ? t("{n} awaiting approval", { n: s.unconfirmed }) : undefined} icon={<Hourglass />} />
           </div>
         )}
       </QueryState>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Attendance trend" description="Present, late and absent — last 30 days">
+        <ChartCard title={t("Attendance trend")} description={t("Present, late and absent — last 30 days")}>
           <ResponsiveContainer>
             <AreaChart data={series}>
               <defs><linearGradient id="gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.primary} stopOpacity={0.35} /><stop offset="100%" stopColor={C.primary} stopOpacity={0} /></linearGradient></defs>
@@ -81,40 +82,40 @@ export function Dashboard({ scope }: { scope: "org" | "team" }) {
               <YAxis allowDecimals={false} width={28} {...axis} />
               <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
               <Legend />
-              <Area type="monotone" dataKey="present" name="Present" stroke={C.primary} fill="url(#gp)" strokeWidth={2} />
-              <Area type="monotone" dataKey="late" name="Late" stroke={C.warn} fill="transparent" strokeWidth={2} />
-              <Area type="monotone" dataKey="absent" name="Absent" stroke={C.danger} fill="transparent" strokeWidth={2} />
+              <Area type="monotone" dataKey="present" name={t("Present")} stroke={C.primary} fill="url(#gp)" strokeWidth={2} />
+              <Area type="monotone" dataKey="late" name={t("Late")} stroke={C.warn} fill="transparent" strokeWidth={2} />
+              <Area type="monotone" dataKey="absent" name={t("Absent")} stroke={C.danger} fill="transparent" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard title="Weekly attendance" description="Totals per week (week starting)">
+        <ChartCard title={t("Weekly attendance")} description={t("Totals per week (week starting)")}>
           <ResponsiveContainer>
             <BarChart data={weekly}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="week" {...axis} /><YAxis allowDecimals={false} width={28} {...axis} />
               <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} /><Legend />
-              <Bar dataKey="present" name="Present" fill={C.primary} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="late" name="Late" fill={C.warn} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="absent" name="Absent" fill={C.danger} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="present" name={t("Present")} fill={C.primary} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="late" name={t("Late")} fill={C.warn} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="absent" name={t("Absent")} fill={C.danger} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard title="Monthly attendance rate" description="% of recorded days with attendance">
+        <ChartCard title={t("Monthly attendance rate")} description={t("% of recorded days with attendance")}>
           <ResponsiveContainer>
             <AreaChart data={series.filter((p) => p.attendance_rate != null)}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="date" tickFormatter={(d: string) => d.slice(5)} {...axis} /><YAxis domain={[0, 100]} unit="%" width={40} {...axis} />
-              <Tooltip formatter={(v) => [`${v}%`, "Attendance"]} contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+              <Tooltip formatter={(v) => [`${v}%`, t("Attendance")]} contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
               <Area type="monotone" dataKey="attendance_rate" stroke={C.primary} fill="url(#gp)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard title="Late arrivals" description="Total late minutes per day">
+        <ChartCard title={t("Late arrivals")} description={t("Total late minutes per day")}>
           <ResponsiveContainer>
             <BarChart data={series}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="date" tickFormatter={(d: string) => d.slice(5)} {...axis} /><YAxis width={32} {...axis} />
-              <Tooltip formatter={(v) => [`${v} min`, "Late"]} contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+              <Tooltip formatter={(v) => [t("{n} min", { n: String(v) }), t("Late")]} contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
               <Bar dataKey="late_minutes" fill={C.warn} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -122,34 +123,34 @@ export function Dashboard({ scope }: { scope: "org" | "team" }) {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-        <ChartCard title="Department performance" description="Attendance and punctuality rate — last 30 days">
+        <ChartCard title={t("Department performance")} description={t("Attendance and punctuality rate — last 30 days")}>
           <ResponsiveContainer>
             <BarChart data={deptPerf.data?.rows ?? []} layout="vertical" margin={{ left: 16 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis type="number" domain={[0, 100]} unit="%" {...axis} /><YAxis type="category" dataKey="department" width={110} {...axis} />
               <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} /><Legend />
-              <Bar dataKey="attendance_rate" name="Attendance %" fill={C.primary} radius={[0, 4, 4, 0]} />
-              <Bar dataKey="punctuality_rate" name="Punctuality %" fill={C.sky} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="attendance_rate" name={t("Attendance %")} fill={C.primary} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="punctuality_rate" name={t("Punctuality %")} fill={C.sky} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
         <Card>
-          <CardHeader><CardTitle>{day === today ? "Scheduled today" : "Pick today to see the live roster"}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{day === today ? t("Scheduled today") : t("Pick today to see the live roster")}</CardTitle></CardHeader>
           <QueryState isLoading={team.isLoading} error={team.error}>
             {team.data?.length ? (
               <Table>
-                <THead><TR><TH>Employee</TH><TH>Shift</TH><TH>In</TH><TH>Worked</TH><TH>Status</TH></TR></THead>
+                <THead><TR><TH>{t("Employee")}</TH><TH>{t("Shift")}</TH><TH>{t("In")}</TH><TH>{t("Worked")}</TH><TH>{t("Status")}</TH></TR></THead>
                 <TBody>{team.data.map((r) => (
                   <TR key={r.employee_id}>
                     <TD><div className="font-medium">{r.employee_name}</div><div className="text-xs text-muted-foreground">{r.department_name ?? "—"}</div></TD>
                     <TD className="whitespace-nowrap">{fmtTime(r.scheduled_start, tz)}–{fmtTime(r.scheduled_end, tz)}</TD>
-                    <TD>{fmtTime(r.actual_check_in, tz)}{r.late_minutes > 0 && <div className="text-xs text-amber-600">+{r.late_minutes}m</div>}</TD>
+                    <TD>{fmtTime(r.actual_check_in, tz)}{r.late_minutes > 0 && <div className="text-xs text-amber-600">+{t("{m}m", { m: r.late_minutes })}</div>}</TD>
                     <TD>{fmtMinutes(r.worked_minutes)}</TD>
                     <TD><StatusBadge status={r.status} /></TD>
                   </TR>
                 ))}</TBody>
               </Table>
-            ) : <EmptyState title={day === today ? "Nobody scheduled today" : "Historical day"}>{day === today ? "Assign work schedules to employees." : "Use Attendance or Reports for past days."}</EmptyState>}
+            ) : <EmptyState title={day === today ? t("Nobody scheduled today") : t("Historical day")}>{day === today ? t("Assign work schedules to employees.") : t("Use Attendance or Reports for past days.")}</EmptyState>}
           </QueryState>
         </Card>
       </div>

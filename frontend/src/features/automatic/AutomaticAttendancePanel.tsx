@@ -12,8 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert } from "@/components/ui/misc";
 import { ConsentCard } from "@/features/checkin/CheckInPanel";
 import { deviceId, newEventUuid } from "@/lib/device";
-import { ago, fmtMinutes, fmtTime, titleCase } from "@/lib/format";
+import { ago, fmtMeters, fmtMinutes, fmtTime, titleCase } from "@/lib/format";
 import { UI_COPY, useAutomaticAttendance, type UiState } from "./useAutomaticAttendance";
+import { t } from "@/i18n";
 
 const ICON: Partial<Record<UiState, React.ReactNode>> = {
   AUTO_CHECKIN: <CheckCircle2 />, ACTIVE_SESSION: <Activity />, SESSION_RESUMED: <CheckCircle2 />, TEMPORARY_EXIT: <TimerReset />,
@@ -63,12 +64,12 @@ export function AutomaticAttendancePanel({ today }: { today: Today }) {
     setBusy(kind);
     try {
       const fix = (geo.fix && Date.now() - geo.fix.timestamp < 60_000 ? geo.fix : null) ?? (await geo.refresh());
-      if (!fix) throw new Error(geo.error?.message ?? "Could not get your location.");
+      if (!fix) throw new Error(geo.error?.message ?? t("Could not get your location."));
       const r = await api<GpsActionResult>(`/attendance/manual-check-${kind}/`, { raw: true, body: {
         event_uuid: newEventUuid(), device_id: deviceId(), latitude: fix.latitude, longitude: fix.longitude, accuracy: fix.accuracy,
         recorded_at: new Date(fix.timestamp).toISOString(), permission_status: "GRANTED_WHEN_IN_USE" } });
-      if (r.state.endsWith("SUCCESS")) toast.success(r.message);
-      else toast.error(r.message);
+      if (r.state.endsWith("SUCCESS")) toast.success(t(r.message));
+      else toast.error(t(r.message));
       await presence.checkNow();
       qc.invalidateQueries();
     } catch (e) {
@@ -82,34 +83,34 @@ export function AutomaticAttendancePanel({ today }: { today: Today }) {
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div>
-          <CardTitle className="flex items-center gap-2"><Radar className="size-5 text-primary" />Automatic attendance</CardTitle>
-          <CardDescription>{office ? `Assigned office: ${office.name}` : "No office assigned"} · {titleCase(policy?.attendance_mode ?? "…")} mode</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Radar className="size-5 text-primary" />{t("Automatic attendance")}</CardTitle>
+          <CardDescription>{office ? t("Assigned office: {name}", { name: office.name }) : t("No office assigned")} · {t("{mode} mode", { mode: titleCase(policy?.attendance_mode ?? "…") })}</CardDescription>
         </div>
         <Badge tone={geo.permission === "granted" ? "success" : geo.permission === "denied" ? "danger" : "neutral"} data-testid="gps-permission">
-          {geo.permission === "granted" ? "GPS allowed" : geo.permission === "denied" ? "GPS blocked" : geo.permission === "unsupported" ? "GPS unsupported" : "GPS permission needed"}
+          {geo.permission === "granted" ? t("GPS allowed") : geo.permission === "denied" ? t("GPS blocked") : geo.permission === "unsupported" ? t("GPS unsupported") : t("GPS permission needed")}
         </Badge>
       </CardHeader>
       <CardContent className="space-y-4">
         <div data-testid="auto-state" data-state={ui.state}>
-          <Alert tone={copy.tone} title={copy.title} icon={presence.sending && ui.state === "INITIALIZING" ? <Spinner /> : ICON[ui.state] ?? <Crosshair />}>{ui.message}</Alert>
+          <Alert tone={copy.tone} title={t(copy.title)} icon={presence.sending && ui.state === "INITIALIZING" ? <Spinner /> : ICON[ui.state] ?? <Crosshair />}>{ui.message}</Alert>
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Metric testId="m-zone" label="Current zone" value={p ? <Badge tone={ZONE_TONE[p.zone_status]}>{titleCase(p.zone_status)}</Badge> : "—"} />
-          <Metric label="Distance to office" value={distance != null ? `${Math.round(distance)} m` : "—"} hint="calculated by the server" />
-          <Metric label="GPS accuracy" value={accuracy != null ? `±${Math.round(accuracy)} m` : geo.fix ? `±${Math.round(geo.fix.accuracy)} m (local)` : "—"} hint={office ? `required ≤ ${Math.round(office.max_accuracy_m)} m` : undefined} />
-          <Metric label="Geofence radius" value={office ? `${Math.round(office.radius_m)} m` : "—"} />
-          <Metric testId="m-status" label="Attendance status" value={p?.record_id ? <StatusBadge status={p.attendance_status} /> : <span className="text-sm text-muted-foreground">{titleCase(p?.attendance_status ?? "—")}</span>} />
-          <Metric testId="m-working" label="Working session" value={fmtMinutes(working)} hint={p?.check_in_time ? `since ${fmtTime(p.check_in_time, tz)}` : "not started"} />
-          <Metric testId="m-away" label="Temporary exit" value={away ? fmtMinutes(awayMinutes) : fmtMinutes(p?.temporary_exit_minutes ?? 0)} hint={away ? "away now" : policy?.count_temporary_exit_as_work ? "counted as work" : "not paid time"} />
-          <Metric label="Last validation" value={p?.last_validated_at ? ago(p.last_validated_at) : "never"} hint={presence.lastSuccessAt ? `last check ${ago(new Date(presence.lastSuccessAt).toISOString())}` : undefined} />
+          <Metric testId="m-zone" label={t("Current zone")} value={p ? <Badge tone={ZONE_TONE[p.zone_status]}>{titleCase(p.zone_status)}</Badge> : "—"} />
+          <Metric label={t("Distance to office")} value={distance != null ? fmtMeters(distance) : "—"} hint={t("calculated by the server")} />
+          <Metric label={t("GPS accuracy")} value={accuracy != null ? fmtMeters(accuracy, true) : geo.fix ? `${fmtMeters(geo.fix.accuracy, true)} (${t("local")})` : "—"} hint={office ? t("required ≤ {n} m", { n: Math.round(office.max_accuracy_m) }) : undefined} />
+          <Metric label={t("Geofence radius")} value={office ? fmtMeters(office.radius_m) : "—"} />
+          <Metric testId="m-status" label={t("Attendance status")} value={p?.record_id ? <StatusBadge status={p.attendance_status} /> : <span className="text-sm text-muted-foreground">{titleCase(p?.attendance_status ?? "—")}</span>} />
+          <Metric testId="m-working" label={t("Working session")} value={fmtMinutes(working)} hint={p?.check_in_time ? t("since {time}", { time: fmtTime(p.check_in_time, tz) }) : t("not started")} />
+          <Metric testId="m-away" label={t("Temporary exit")} value={away ? fmtMinutes(awayMinutes) : fmtMinutes(p?.temporary_exit_minutes ?? 0)} hint={away ? t("away now") : policy?.count_temporary_exit_as_work ? t("counted as work") : t("not paid time")} />
+          <Metric label={t("Last validation")} value={p?.last_validated_at ? ago(p.last_validated_at) : t("never")} hint={presence.lastSuccessAt ? t("last check {when}", { when: ago(new Date(presence.lastSuccessAt).toISOString()) }) : undefined} />
         </div>
 
         {fence.length > 0 && <GeoMap className="h-52" fences={fence} me={geo.fix ? { lat: geo.fix.latitude, lng: geo.fix.longitude, accuracy: geo.fix.accuracy } : null} />}
 
         {server?.events && server.events.length > 0 && (
-          <div className="space-y-1.5" aria-label="Today's timeline">
-            <div className="text-sm font-semibold">Today</div>
+          <div className="space-y-1.5" aria-label={t("Today's timeline")}>
+            <div className="text-sm font-semibold">{t("Today")}</div>
             {server.events.filter((e) => e.effect && !e.effect.startsWith("IGNORED") && e.effect !== "PRESENCE_ONLY").map((e, i) => (
               <div key={i} className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-1.5 text-sm">
                 <span>{titleCase(e.effect!)}</span><span className="tabular-nums text-muted-foreground">{fmtTime(e.occurred_at, tz)}</span>
@@ -120,17 +121,17 @@ export function AutomaticAttendancePanel({ today }: { today: Today }) {
 
         <div className="flex flex-wrap gap-2">
           {hybrid && (p?.session_status === "ACTIVE" || p?.session_status === "TEMPORARY_EXIT"
-            ? <Button variant="outline" disabled={!!busy || !policy?.manual_actions_allowed} onClick={() => manual("out")} data-testid="manual-out">{busy === "out" ? <Spinner /> : <LogOut />}Check out manually</Button>
-            : <Button variant="outline" disabled={!!busy || !policy?.manual_actions_allowed} onClick={() => manual("in")} data-testid="manual-in">{busy === "in" ? <Spinner /> : <LogIn />}Check in manually</Button>)}
-          <Button variant="ghost" disabled={presence.sending} onClick={() => presence.checkNow()}><RefreshCw />Check location now</Button>
+            ? <Button variant="outline" disabled={!!busy || !policy?.manual_actions_allowed} onClick={() => manual("out")} data-testid="manual-out">{busy === "out" ? <Spinner /> : <LogOut />}{t("Check out manually")}</Button>
+            : <Button variant="outline" disabled={!!busy || !policy?.manual_actions_allowed} onClick={() => manual("in")} data-testid="manual-in">{busy === "in" ? <Spinner /> : <LogIn />}{t("Check in manually")}</Button>)}
+          <Button variant="ghost" disabled={presence.sending} onClick={() => presence.checkNow()}><RefreshCw />{t("Check location now")}</Button>
         </div>
 
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground" data-testid="tracking-indicator">
           <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            {geo.watching ? <b className="text-foreground">Location active</b> : "Location paused"} — checked every {policy?.presence_interval_seconds ?? 30} s only while this screen is open.
-            Closing or hiding it stops location immediately; your session is kept and your manager sees “stale”, not “left”.
-            The server confirms arrivals ({policy?.entry_confirmation_count ?? 2} readings) and exits ({policy?.exit_confirmation_count ?? 3} readings).
+            {geo.watching ? <b className="text-foreground">{t("Location active")}</b> : t("Location paused")} — {t("checked every {n} s only while this screen is open.", { n: policy?.presence_interval_seconds ?? 30 })}{" "}
+            {t("Closing or hiding it stops location immediately; your session is kept and your manager sees “stale”, not “left”.")}{" "}
+            {t("The server confirms arrivals ({entry} readings) and exits ({exit} readings).", { entry: policy?.entry_confirmation_count ?? 2, exit: policy?.exit_confirmation_count ?? 3 })}
           </span>
         </p>
       </CardContent>

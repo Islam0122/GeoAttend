@@ -2,6 +2,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
 import { Circle, CircleMarker, MapContainer, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { t } from "@/i18n";
 
 export interface Fence {
   id: number | string;
@@ -45,7 +46,7 @@ export function GeoMap({ fences, onPick, me, className = "h-80" }: { fences: Fen
   return (
     <div className={`overflow-hidden rounded-lg border ${className}`}>
       <MapContainer center={center} zoom={16} style={{ height: "100%", width: "100%" }} scrollWheelZoom={!!onPick}>
-        <TileLayer url={TILE} attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
+        <TileLayer url={TILE} attribution={`&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ${t("contributors")}`} />
         <Fit fences={fences} me={me} />
         <Picker onPick={onPick} />
         {fences.map((f) => (
@@ -60,7 +61,7 @@ export function GeoMap({ fences, onPick, me, className = "h-80" }: { fences: Fen
           <>
             <Circle center={[me.lat, me.lng]} radius={me.accuracy} pathOptions={{ color: "#0284c7", fillOpacity: 0.1, weight: 1, dashArray: "4 4" }} />
             <CircleMarker center={[me.lat, me.lng]} radius={7} pathOptions={{ color: "#fff", weight: 2, fillColor: "#0284c7", fillOpacity: 1 }}>
-              <Tooltip direction="bottom">You (±{Math.round(me.accuracy)} m)</Tooltip>
+              <Tooltip direction="bottom">{t("You (±{n} m)", { n: Math.round(me.accuracy) })}</Tooltip>
             </CircleMarker>
           </>
         )}
