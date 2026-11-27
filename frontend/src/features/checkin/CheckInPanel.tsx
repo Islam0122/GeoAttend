@@ -13,11 +13,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert } from "@/components/ui/misc";
 import { registerDevice } from "@/features/session";
 import { deviceId, newEventUuid } from "@/lib/device";
-import { fmtTime } from "@/lib/format";
+import { fmtMeters, fmtTime } from "@/lib/format";
 import { getPosition, type Fix } from "@/lib/geo";
 import { enqueue } from "@/lib/offlineQueue";
 import { useQueueStore } from "@/stores/queue";
 import { useLocationCheck, type CheckState } from "./useLocationCheck";
+import { msg, t } from "@/i18n";
 
 type Outcome =
   | { kind: "result"; result: GpsActionResult }
@@ -25,15 +26,15 @@ type Outcome =
   | { kind: "error"; message: string };
 
 const STATE_COPY: Record<CheckState, { title: string; tone: "success" | "warning" | "danger" | "info" | "neutral"; text: string }> = {
-  LOCATION_PERMISSION_REQUIRED: { title: "Location permission required", tone: "info", text: "Allow location access so we can confirm you are at your office." },
-  PERMISSION_DENIED: { title: "Location blocked", tone: "danger", text: "Location access is blocked for this site. Enable it in your browser's site settings, then retry." },
-  GETTING_LOCATION: { title: "Getting your location…", tone: "info", text: "This can take a few seconds. Stay near a window for the best accuracy." },
-  LOCATION_FOUND: { title: "Location found", tone: "neutral", text: "No office geofence is assigned to you yet. Ask your administrator." },
-  INSIDE_GEOFENCE: { title: "You're inside the office zone", tone: "success", text: "You can check in now." },
-  OUTSIDE_GEOFENCE: { title: "You're outside the office zone", tone: "warning", text: "Move inside the office geofence to check in." },
-  GPS_ACCURACY_LOW: { title: "GPS accuracy too low", tone: "warning", text: "Your position is not precise enough to confirm. Move near a window or outdoors and retry." },
-  LOCATION_ERROR: { title: "Location unavailable", tone: "danger", text: "Your device could not determine a location. Check that location services are on." },
-  UNSUPPORTED: { title: "Location not available", tone: "danger", text: "This browser or connection cannot provide location. Use HTTPS and a modern browser." },
+  LOCATION_PERMISSION_REQUIRED: { title: msg("Location permission required"), tone: "info", text: msg("Allow location access so we can confirm you are at your office.") },
+  PERMISSION_DENIED: { title: msg("Location blocked"), tone: "danger", text: msg("Location access is blocked for this site. Enable it in your browser's site settings, then retry.") },
+  GETTING_LOCATION: { title: msg("Getting your location…"), tone: "info", text: msg("This can take a few seconds. Stay near a window for the best accuracy.") },
+  LOCATION_FOUND: { title: msg("Location found"), tone: "neutral", text: msg("No office geofence is assigned to you yet. Ask your administrator.") },
+  INSIDE_GEOFENCE: { title: msg("You're inside the office zone"), tone: "success", text: msg("You can check in now.") },
+  OUTSIDE_GEOFENCE: { title: msg("You're outside the office zone"), tone: "warning", text: msg("Move inside the office geofence to check in.") },
+  GPS_ACCURACY_LOW: { title: msg("GPS accuracy too low"), tone: "warning", text: msg("Your position is not precise enough to confirm. Move near a window or outdoors and retry.") },
+  LOCATION_ERROR: { title: msg("Location unavailable"), tone: "danger", text: msg("Your device could not determine a location. Check that location services are on.") },
+  UNSUPPORTED: { title: msg("Location not available"), tone: "danger", text: msg("This browser or connection cannot provide location. Use HTTPS and a modern browser.") },
 };
 
 export function ConsentCard({ onDone }: { onDone(): void }) {
@@ -42,15 +43,15 @@ export function ConsentCard({ onDone }: { onDone(): void }) {
   return (
     <Card className="border-primary/30">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5 text-primary" />How your location is used</CardTitle>
-        <CardDescription>Required once before your first GPS check-in.</CardDescription>
+        <CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5 text-primary" />{t("How your location is used")}</CardTitle>
+        <CardDescription>{t("Required once before your first GPS check-in.")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm leading-relaxed text-muted-foreground">{data?.policy_text}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{data?.policy_text && t(data.policy_text)}</p>
         <ul className="space-y-1.5 text-sm">
-          <li>• Location is read only when you press Check in / Check out, and while this screen is open during an active work session.</li>
-          <li>• There is no hidden or background tracking; closing this page stops all location access.</li>
-          <li>• Managers see your status and distance to the office, never a movement trail.</li>
+          <li>• {t("Location is read only when you press Check in / Check out, and while this screen is open during an active work session.")}</li>
+          <li>• {t("There is no hidden or background tracking; closing this page stops all location access.")}</li>
+          <li>• {t("Managers see your status and distance to the office, never a movement trail.")}</li>
         </ul>
         <Button disabled={busy || !data} onClick={async () => {
           setBusy(true);
@@ -62,7 +63,7 @@ export function ConsentCard({ onDone }: { onDone(): void }) {
           } finally {
             setBusy(false);
           }
-        }}>I agree — enable GPS attendance</Button>
+        }}>{t("I agree — enable GPS attendance")}</Button>
       </CardContent>
     </Card>
   );
@@ -100,7 +101,7 @@ export function CheckInPanel({ today, onFix }: { today: Today; onFix?: (f: Fix) 
       if (loc.fix && Date.now() - loc.fix.timestamp < 60_000) fix = loc.fix;
       else {
         setBusy(null);
-        setOutcome({ kind: "error", message: (e as Error).message || "Could not get your location." });
+        setOutcome({ kind: "error", message: (e as Error).message || t("Could not get your location.") });
         return;
       }
     }
@@ -137,7 +138,7 @@ export function CheckInPanel({ today, onFix }: { today: Today; onFix?: (f: Fix) 
     setBusy("BREAK");
     try {
       await api(a.can_end_break ? "/attendance/break/end/" : "/attendance/break/start/", { body: a.can_end_break ? {} : { type: "LUNCH" } });
-      toast.success(a.can_end_break ? "Welcome back — break ended" : "Break started");
+      toast.success(a.can_end_break ? t("Welcome back — break ended") : t("Break started"));
       qc.invalidateQueries({ queryKey: ["/attendance/today/"] });
     } catch (e) {
       toast.error((e as Error).message);
@@ -156,24 +157,24 @@ export function CheckInPanel({ today, onFix }: { today: Today; onFix?: (f: Fix) 
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div>
-          <CardTitle className="flex items-center gap-2"><LocateFixed className="size-5 text-primary" />GPS attendance</CardTitle>
-          <CardDescription>{office ? `Assigned office: ${office.name}` : today.offices.length ? `${today.offices.length} assigned offices` : "No office assigned"}</CardDescription>
+          <CardTitle className="flex items-center gap-2"><LocateFixed className="size-5 text-primary" />{t("GPS attendance")}</CardTitle>
+          <CardDescription>{office ? t("Assigned office: {name}", { name: office.name }) : today.offices.length ? t("{n} assigned offices", { n: today.offices.length }) : t("No office assigned")}</CardDescription>
         </div>
         <Badge tone={loc.permission === "granted" ? "success" : loc.permission === "denied" ? "danger" : "neutral"} data-testid="permission-badge">
-          {loc.permission === "granted" ? "Location allowed" : loc.permission === "denied" ? "Location blocked" : loc.permission === "unsupported" ? "Unsupported" : "Permission needed"}
+          {loc.permission === "granted" ? t("Location allowed") : loc.permission === "denied" ? t("Location blocked") : loc.permission === "unsupported" ? t("Unsupported") : t("Permission needed")}
         </Badge>
       </CardHeader>
       <CardContent className="space-y-4">
         <div data-testid="check-state" data-state={loc.state}>
-          <Alert tone={copy.tone} title={copy.title} icon={loc.state === "GETTING_LOCATION" ? <Spinner /> : loc.state === "INSIDE_GEOFENCE" ? <CheckCircle2 /> : loc.state === "PERMISSION_DENIED" || loc.state === "UNSUPPORTED" ? <MapPinOff /> : <Crosshair />}>
-            {loc.state === "OUTSIDE_GEOFENCE" && loc.distance != null && office ? `You are about ${Math.round(loc.distance)} m from ${office.name} (zone radius ${Math.round(office.radius_m)} m).` : loc.error && loc.state !== "GETTING_LOCATION" ? loc.error : copy.text}
+          <Alert tone={copy.tone} title={t(copy.title)} icon={loc.state === "GETTING_LOCATION" ? <Spinner /> : loc.state === "INSIDE_GEOFENCE" ? <CheckCircle2 /> : loc.state === "PERMISSION_DENIED" || loc.state === "UNSUPPORTED" ? <MapPinOff /> : <Crosshair />}>
+            {loc.state === "OUTSIDE_GEOFENCE" && loc.distance != null && office ? t("You are about {d} m from {office} (zone radius {r} m).", { d: Math.round(loc.distance), office: office.name, r: Math.round(office.radius_m) }) : loc.error && loc.state !== "GETTING_LOCATION" ? loc.error : t(copy.text)}
           </Alert>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <Metric label="GPS accuracy" value={loc.fix ? `±${Math.round(loc.fix.accuracy)} m` : "—"} warn={!!(loc.fix && office && loc.fix.accuracy > office.max_accuracy_m)} />
-          <Metric label="Distance" value={loc.distance != null ? `${Math.round(loc.distance)} m` : "—"} />
-          <Metric label="Geofence radius" value={office ? `${Math.round(office.radius_m)} m` : "—"} />
+          <Metric label={t("GPS accuracy")} value={loc.fix ? fmtMeters(loc.fix.accuracy, true) : "—"} warn={!!(loc.fix && office && loc.fix.accuracy > office.max_accuracy_m)} />
+          <Metric label={t("Distance")} value={loc.distance != null ? fmtMeters(loc.distance) : "—"} />
+          <Metric label={t("Geofence radius")} value={office ? fmtMeters(office.radius_m) : "—"} />
         </div>
 
         {(loc.fix || fence.length > 0) && (
@@ -185,26 +186,26 @@ export function CheckInPanel({ today, onFix }: { today: Today; onFix?: (f: Fix) 
         <div className="flex flex-col gap-2 sm:flex-row">
           {(!checkedIn || onBreak) && (
             <Button size="xl" className="flex-1" disabled={!!busy || !a.window_open || loc.state === "UNSUPPORTED"} onClick={() => (onBreak ? toggleBreak() : act("CHECK_IN"))} data-testid="check-in-button">
-              {busy === "CHECK_IN" ? <Spinner /> : <LogIn />} {onBreak ? "End break" : "Check in"}
+              {busy === "CHECK_IN" ? <Spinner /> : <LogIn />} {onBreak ? t("End break") : t("Check in")}
             </Button>
           )}
           {checkedIn && !onBreak && (
             <>
               <Button size="xl" className="flex-1" variant="default" disabled={!!busy} onClick={() => act("CHECK_OUT")} data-testid="check-out-button">
-                {busy === "CHECK_OUT" ? <Spinner /> : <LogOut />} Check out
+                {busy === "CHECK_OUT" ? <Spinner /> : <LogOut />} {t("Check out")}
               </Button>
-              <Button size="xl" variant="outline" disabled={!!busy || !a.can_start_break} onClick={toggleBreak}><Coffee />Break</Button>
+              <Button size="xl" variant="outline" disabled={!!busy || !a.can_start_break} onClick={toggleBreak}><Coffee />{t("Break")}</Button>
             </>
           )}
           {loc.state !== "GETTING_LOCATION" && loc.state !== "UNSUPPORTED" && (
-            <Button size="xl" variant="outline" disabled={!!busy} onClick={() => loc.locate()} aria-label="Refresh location">
-              <RefreshCw />{loc.state === "LOCATION_PERMISSION_REQUIRED" ? "Allow location" : "Refresh"}
+            <Button size="xl" variant="outline" disabled={!!busy} onClick={() => loc.locate()} aria-label={t("Refresh location")}>
+              <RefreshCw />{loc.state === "LOCATION_PERMISSION_REQUIRED" ? t("Allow location") : t("Refresh")}
             </Button>
           )}
         </div>
-        {!a.window_open && <p className="text-sm text-muted-foreground">Check-in opens shortly before your scheduled shift{today.shift ? ` (${fmtTime(today.shift.tracking_window_start, tz)}–${fmtTime(today.shift.tracking_window_end, tz)})` : ""}.</p>}
+        {!a.window_open && <p className="text-sm text-muted-foreground">{t("Check-in opens shortly before your scheduled shift")}{today.shift ? ` (${fmtTime(today.shift.tracking_window_start, tz)}–${fmtTime(today.shift.tracking_window_end, tz)})` : ""}.</p>}
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck className="size-3.5" /> Location is read only while this screen is open{checkedIn ? " during your work session" : ""}. The server verifies every check-in.
+          <ShieldCheck className="size-3.5" /> {checkedIn ? t("Location is read only while this screen is open during your work session.") : t("Location is read only while this screen is open.")} {t("The server verifies every check-in.")}
         </p>
       </CardContent>
     </Card>
@@ -214,26 +215,25 @@ export function CheckInPanel({ today, onFix }: { today: Today; onFix?: (f: Fix) 
 function OutcomeView({ outcome, tz, onRetry }: { outcome: Outcome; tz?: string; onRetry(): void }) {
   if (outcome.kind === "queued")
     return (
-      <Alert tone="info" icon={<WifiOff />} title={`${outcome.action === "CHECK_IN" ? "Check-in" : "Check-out"} saved offline — pending`} >
-        Recorded at {fmtTime(outcome.at, tz)} on this device. It is <b>not yet accepted</b>: the server will validate it automatically when you are back online.
+      <Alert tone="info" icon={<WifiOff />} title={outcome.action === "CHECK_IN" ? t("Check-in saved offline — pending") : t("Check-out saved offline — pending")} >
+        {t("Recorded at {time} on this device. It is not yet accepted: the server will validate it automatically when you are back online.", { time: fmtTime(outcome.at, tz) })}
       </Alert>
     );
-  if (outcome.kind === "error") return <Alert tone="danger" icon={<XCircle />} title="Something went wrong">{outcome.message}</Alert>;
+  if (outcome.kind === "error") return <Alert tone="danger" icon={<XCircle />} title={t("Something went wrong")}>{outcome.message}</Alert>;
   const r = outcome.result;
   if (r.state === "CHECK_IN_SUCCESS" || r.state === "CHECK_OUT_SUCCESS") {
-    const verb = r.state === "CHECK_IN_SUCCESS" ? "checked in" : "checked out";
     return (
-      <Alert tone="success" icon={<CheckCircle2 />} title={r.pending_approval ? "Recorded — awaiting manager approval" : `You ${verb} successfully at ${fmtTime(r.recorded_at, tz)}.`}>
-        {r.office_name && `${r.office_name} · ${r.distance_m != null ? `${Math.round(r.distance_m)} m from office` : ""} · GPS ±${Math.round(r.accuracy_m ?? 0)} m`}
+      <Alert tone="success" icon={<CheckCircle2 />} title={r.pending_approval ? t("Recorded — awaiting manager approval") : (r.state === "CHECK_IN_SUCCESS" ? t("You checked in successfully at {time}.", { time: fmtTime(r.recorded_at, tz) }) : t("You checked out successfully at {time}.", { time: fmtTime(r.recorded_at, tz) }))}>
+        {r.office_name && `${r.office_name} · ${r.distance_m != null ? t("{n} m from office", { n: Math.round(r.distance_m) }) : ""} · GPS ${fmtMeters(r.accuracy_m ?? 0, true)}`}
       </Alert>
     );
   }
   return (
     <div data-testid="outcome-failed" data-state={r.state}>
       <Alert tone={r.state === "OUTSIDE_GEOFENCE" || r.state === "GPS_ACCURACY_LOW" ? "warning" : "danger"} icon={<ShieldAlert />}
-             title={r.state === "GPS_ACCURACY_LOW" ? "GPS accuracy too low — please retry" : r.state === "OUTSIDE_GEOFENCE" ? "Outside the office geofence" : "Check-in failed"}>
-        <div>{r.message}</div>
-        <Button size="sm" variant="outline" className="mt-2" onClick={onRetry}><RefreshCw />Retry</Button>
+             title={r.state === "GPS_ACCURACY_LOW" ? t("GPS accuracy too low — please retry") : r.state === "OUTSIDE_GEOFENCE" ? t("Outside the office geofence") : t("Check-in failed")}>
+        <div>{t(r.message)}</div>
+        <Button size="sm" variant="outline" className="mt-2" onClick={onRetry}><RefreshCw />{t("Retry")}</Button>
       </Alert>
     </div>
   );

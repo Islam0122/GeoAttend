@@ -8,9 +8,10 @@ import { AutomaticAttendancePanel } from "@/features/automatic/AutomaticAttendan
 import { useAttendancePolicy } from "@/features/automatic/useAutomaticAttendance";
 import { usePresenceReporter } from "@/features/automatic/usePresenceReporter";
 import { CheckInPanel } from "@/features/checkin/CheckInPanel";
-import { fmtMinutes, fmtTime, greeting } from "@/lib/format";
+import { fmtMinutes, fmtTime, greeting, titleCase } from "@/lib/format";
 import { useAuthStore } from "@/stores/auth";
 import { useQueueStore } from "@/stores/queue";
+import { msg, t } from "@/i18n";
 
 export function MyDashboard() {
   const me = useAuthStore((s) => s.me)!;
@@ -22,39 +23,39 @@ export function MyDashboard() {
     intervalSeconds: policy?.presence_interval_seconds ?? 30,
   });
   const automatic = policy && policy.attendance_mode !== "MANUAL";
-  const t = q.data;
-  const tz = t?.shift?.timezone ?? me.organization_timezone;
-  const r = t?.record;
+  const td = q.data;
+  const tz = td?.shift?.timezone ?? me.organization_timezone;
+  const r = td?.record;
   return (
     <>
       <PageHeader title={`${greeting(tz)}, ${me.full_name.split(" ")[0]}!`}
-        description={t?.shift ? <>Your shift {new Date(t.shift.start) > new Date() ? "starts" : "started"} at <b>{fmtTime(t.shift.start, tz)}</b> and ends at <b>{fmtTime(t.shift.end, tz)}</b>.</> : "You have no shift scheduled today."} />
+        description={td?.shift ? t(new Date(td.shift.start) > new Date() ? msg("Your shift starts at {start} and ends at {end}.") : msg("Your shift started at {start} and ends at {end}."), { start: fmtTime(td.shift.start, tz), end: fmtTime(td.shift.end, tz) }) : t("You have no shift scheduled today.")} />
       <QueryState isLoading={q.isLoading} error={q.error} rows={6}>
-        {t && (
+        {td && (
           <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
             <div className="space-y-4">
-              {pending.length > 0 && <Alert tone="info" title={`${pending.length} offline action(s) pending`}>They'll be validated by the server automatically when you're online.</Alert>}
-              {automatic ? <AutomaticAttendancePanel today={t} /> : <CheckInPanel today={t} onFix={reporter} />}
+              {pending.length > 0 && <Alert tone="info" title={t("{n} offline action(s) pending", { n: pending.length })}>{t("They'll be validated by the server automatically when you're online.")}</Alert>}
+              {automatic ? <AutomaticAttendancePanel today={td} /> : <CheckInPanel today={td} onFix={reporter} />}
             </div>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <StatCard label="Status" value={r ? <StatusBadge status={r.status} /> : <span className="text-base text-muted-foreground">Not checked in</span>} icon={<Clock />} />
-                <StatCard label="Worked today" value={fmtMinutes(r?.worked_minutes)} icon={<Timer />} accent />
-                <StatCard label="Checked in" value={fmtTime(r?.actual_check_in, tz)} hint={r?.late_minutes ? `${r.late_minutes} min late` : r?.actual_check_in ? "On time" : undefined} icon={<CalendarClock />} />
-                <StatCard label="Breaks" value={fmtMinutes(r?.break_minutes)} icon={<Coffee />} />
+                <StatCard label={t("Status")} value={r ? <StatusBadge status={r.status} /> : <span className="text-base text-muted-foreground">{t("Not checked in")}</span>} icon={<Clock />} />
+                <StatCard label={t("Worked today")} value={fmtMinutes(r?.worked_minutes)} icon={<Timer />} accent />
+                <StatCard label={t("Checked in")} value={fmtTime(r?.actual_check_in, tz)} hint={r?.late_minutes ? t("{n} min late", { n: r.late_minutes }) : r?.actual_check_in ? t("On time") : undefined} icon={<CalendarClock />} />
+                <StatCard label={t("Breaks")} value={fmtMinutes(r?.break_minutes)} icon={<Coffee />} />
               </div>
               <Card>
-                <CardHeader><CardTitle>Today's schedule</CardTitle></CardHeader>
+                <CardHeader><CardTitle>{t("Today's schedule")}</CardTitle></CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  {t.shift ? (
+                  {td.shift ? (
                     <>
-                      <Row k="Shift" v={`${fmtTime(t.shift.start, tz)} – ${fmtTime(t.shift.end, tz)}`} />
-                      {t.shift.break_start && <Row k="Lunch" v={`${fmtTime(t.shift.break_start, tz)} – ${fmtTime(t.shift.break_end, tz)}`} />}
-                      <Row k="Grace period" v={`${t.shift.grace_period_minutes} min`} />
-                      <Row k="Check-in window" v={`${fmtTime(t.shift.tracking_window_start, tz)} – ${fmtTime(t.shift.tracking_window_end, tz)}`} />
-                      <Row k="Approval policy" v={t.actions.confirmation_policy.replaceAll("_", " ").toLowerCase()} />
+                      <Row k={t("Shift")} v={`${fmtTime(td.shift.start, tz)} – ${fmtTime(td.shift.end, tz)}`} />
+                      {td.shift.break_start && <Row k={t("Lunch")} v={`${fmtTime(td.shift.break_start, tz)} – ${fmtTime(td.shift.break_end, tz)}`} />}
+                      <Row k={t("Grace period")} v={t("{n} min", { n: td.shift.grace_period_minutes })} />
+                      <Row k={t("Check-in window")} v={`${fmtTime(td.shift.tracking_window_start, tz)} – ${fmtTime(td.shift.tracking_window_end, tz)}`} />
+                      <Row k={t("Approval policy")} v={titleCase(td.actions.confirmation_policy)} />
                     </>
-                  ) : <p className="text-muted-foreground">No working shift today.</p>}
+                  ) : <p className="text-muted-foreground">{t("No working shift today.")}</p>}
                 </CardContent>
               </Card>
             </div>

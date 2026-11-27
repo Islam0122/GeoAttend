@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GEO_OPTIONS, GeoError, getPosition, queryPermission, watchPermission, type Fix, type PermissionState } from "@/lib/geo";
 import { reportPermission } from "@/features/session";
+import { t } from "@/i18n";
 
 export interface GeolocationState {
   permission: PermissionState;
@@ -35,9 +36,9 @@ export function useGeolocation(enabled: boolean): GeolocationState {
   }, []);
 
   const onError = useCallback((err: GeolocationPositionError) => {
-    const e = err.code === err.PERMISSION_DENIED ? new GeoError("PERMISSION_DENIED", "Location permission was denied.")
-      : err.code === err.TIMEOUT ? new GeoError("TIMEOUT", "Getting your location took too long.")
-      : new GeoError("POSITION_UNAVAILABLE", "Your location is currently unavailable.");
+    const e = err.code === err.PERMISSION_DENIED ? new GeoError("PERMISSION_DENIED", t("Location permission was denied."))
+      : err.code === err.TIMEOUT ? new GeoError("TIMEOUT", t("Getting your location took too long."))
+      : new GeoError("POSITION_UNAVAILABLE", t("Your location is currently unavailable."));
     setError(e);
     if (e.kind === "PERMISSION_DENIED") {
       setPermission("denied");
@@ -54,11 +55,11 @@ export function useGeolocation(enabled: boolean): GeolocationState {
   const start = useCallback(() => {
     if (watchId.current !== null) return;
     if (typeof window !== "undefined" && window.isSecureContext === false) {
-      setError(new GeoError("INSECURE_CONTEXT", "Location requires HTTPS (or localhost)."));
+      setError(new GeoError("INSECURE_CONTEXT", t("Location requires HTTPS (or localhost).")));
       return;
     }
     if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setError(new GeoError("UNSUPPORTED", "This browser does not support location services."));
+      setError(new GeoError("UNSUPPORTED", t("This browser does not support location services.")));
       setPermission("unsupported");
       return;
     }

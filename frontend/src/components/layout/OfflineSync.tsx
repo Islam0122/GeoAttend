@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/stores/auth";
 import { useQueueStore } from "@/stores/queue";
 import { useUiStore } from "@/stores/ui";
+import { t } from "@/i18n";
 
 /** Tracks connectivity and retries queued offline check-ins (on reconnect, on focus and every 30 s). */
 export function OfflineSync() {
@@ -17,8 +18,8 @@ export function OfflineSync() {
       if (!navigator.onLine || !useAuthStore.getState().accessToken) return;
       const res = await sync();
       for (const r of res) {
-        if (r.ok) toast.success(`Offline ${r.kind === "CHECK_IN" ? "check-in" : "check-out"} synced`, { description: r.message });
-        else toast.error(`Offline ${r.kind === "CHECK_IN" ? "check-in" : "check-out"} was rejected`, { description: r.message });
+        if (r.ok) toast.success(r.kind === "CHECK_IN" ? t("Offline check-in synced") : t("Offline check-out synced"), { description: r.message && t(r.message) });
+        else toast.error(r.kind === "CHECK_IN" ? t("Offline check-in was rejected") : t("Offline check-out was rejected"), { description: r.message && t(r.message) });
       }
       if (res.length) qc.invalidateQueries();
     };

@@ -15,7 +15,9 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { useQueueStore } from "@/stores/queue";
 import { useUiStore } from "@/stores/ui";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Logo } from "./Logo";
+import { t } from "@/i18n";
 
 interface Item { to: string; label: string; icon: ReactNode; end?: boolean }
 
@@ -23,45 +25,45 @@ function useNav(): { title: string; items: Item[] }[] {
   const me = useAuthStore((s) => s.me);
   const sections: { title: string; items: Item[] }[] = [];
   if (me?.employee_id) {
-    sections.push({ title: "Me", items: [
-      { to: "/app", label: "My dashboard", icon: <Gauge />, end: true },
-      { to: "/app/attendance", label: "My attendance", icon: <ClipboardList /> },
-      { to: "/app/schedule", label: "My schedule", icon: <CalendarDays /> },
-      { to: "/app/reports", label: "My reports", icon: <BarChart3 /> },
-      { to: "/app/leave", label: "Leave requests", icon: <Plane /> },
+    sections.push({ title: t("Me"), items: [
+      { to: "/app", label: t("My dashboard"), icon: <Gauge />, end: true },
+      { to: "/app/attendance", label: t("My attendance"), icon: <ClipboardList /> },
+      { to: "/app/schedule", label: t("My schedule"), icon: <CalendarDays /> },
+      { to: "/app/reports", label: t("My reports"), icon: <BarChart3 /> },
+      { to: "/app/leave", label: t("Leave requests"), icon: <Plane /> },
     ] });
   }
   if (me?.role === "MANAGER") {
-    sections.push({ title: "Team", items: [
-      { to: "/app/team", label: "Team dashboard", icon: <LayoutDashboard />, end: true },
-      { to: "/app/team/attendance", label: "Team attendance", icon: <ClipboardCheck /> },
-      { to: "/app/team/monitoring", label: "Monitoring", icon: <Monitor /> },
-      { to: "/app/team/approvals", label: "Approvals", icon: <CheckSquare /> },
-      { to: "/app/team/corrections", label: "Corrections", icon: <FileClock /> },
-      { to: "/app/team/leave", label: "Leave requests", icon: <Plane /> },
-      { to: "/app/team/reports", label: "Team reports", icon: <BarChart3 /> },
+    sections.push({ title: t("Team"), items: [
+      { to: "/app/team", label: t("Team dashboard"), icon: <LayoutDashboard />, end: true },
+      { to: "/app/team/attendance", label: t("Team attendance"), icon: <ClipboardCheck /> },
+      { to: "/app/team/monitoring", label: t("Monitoring"), icon: <Monitor /> },
+      { to: "/app/team/approvals", label: t("Approvals"), icon: <CheckSquare /> },
+      { to: "/app/team/corrections", label: t("Corrections"), icon: <FileClock /> },
+      { to: "/app/team/leave", label: t("Leave requests"), icon: <Plane /> },
+      { to: "/app/team/reports", label: t("Team reports"), icon: <BarChart3 /> },
     ] });
   }
   if (isHR(me) || me?.role === "ACCOUNTANT") {
     const items: Item[] = [
-      { to: "/app/admin", label: "Dashboard", icon: <LayoutDashboard />, end: true },
-      { to: "/app/admin/attendance", label: "Attendance", icon: <ClipboardCheck /> },
+      { to: "/app/admin", label: t("Dashboard"), icon: <LayoutDashboard />, end: true },
+      { to: "/app/admin/attendance", label: t("Attendance"), icon: <ClipboardCheck /> },
     ];
-    if (isStaff(me)) items.push({ to: "/app/admin/monitoring", label: "Monitoring", icon: <Monitor /> }, { to: "/app/admin/approvals", label: "Approvals", icon: <CheckSquare /> },
-      { to: "/app/admin/corrections", label: "Corrections", icon: <FileClock /> }, { to: "/app/admin/anomalies", label: "Anomalies", icon: <FileWarning /> },
-      { to: "/app/admin/leave", label: "Leave management", icon: <Plane /> });
-    if (canSeeReports(me)) items.push({ to: "/app/admin/reports", label: "Reports", icon: <BarChart3 /> });
-    sections.push({ title: "Organization", items });
+    if (isStaff(me)) items.push({ to: "/app/admin/monitoring", label: t("Monitoring"), icon: <Monitor /> }, { to: "/app/admin/approvals", label: t("Approvals"), icon: <CheckSquare /> },
+      { to: "/app/admin/corrections", label: t("Corrections"), icon: <FileClock /> }, { to: "/app/admin/anomalies", label: t("Anomalies"), icon: <FileWarning /> },
+      { to: "/app/admin/leave", label: t("Leave management"), icon: <Plane /> });
+    if (canSeeReports(me)) items.push({ to: "/app/admin/reports", label: t("Reports"), icon: <BarChart3 /> });
+    sections.push({ title: t("Organization"), items });
     if (isHR(me)) {
       const ws: Item[] = [
-        { to: "/app/admin/employees", label: "Employees", icon: <Users /> },
-        { to: "/app/admin/departments", label: "Departments", icon: <Network /> },
-        { to: "/app/admin/schedules", label: "Work schedules", icon: <CalendarClock /> },
+        { to: "/app/admin/employees", label: t("Employees"), icon: <Users /> },
+        { to: "/app/admin/departments", label: t("Departments"), icon: <Network /> },
+        { to: "/app/admin/schedules", label: t("Work schedules"), icon: <CalendarClock /> },
       ];
-      if (isAdmin(me)) ws.splice(2, 0, { to: "/app/admin/offices", label: "Offices & geofences", icon: <MapPin /> });
-      if (isAdmin(me)) ws.push({ to: "/app/admin/settings", label: "Settings", icon: <Settings /> }, { to: "/app/admin/billing", label: "Billing", icon: <CreditCard /> },
-        { to: "/app/admin/audit", label: "Audit log", icon: <ShieldCheck /> });
-      sections.push({ title: "Workspace", items: ws });
+      if (isAdmin(me)) ws.splice(2, 0, { to: "/app/admin/offices", label: t("Offices & geofences"), icon: <MapPin /> });
+      if (isAdmin(me)) ws.push({ to: "/app/admin/settings", label: t("Settings"), icon: <Settings /> }, { to: "/app/admin/billing", label: t("Billing"), icon: <CreditCard /> },
+        { to: "/app/admin/audit", label: t("Audit log"), icon: <ShieldCheck /> });
+      sections.push({ title: t("Workspace"), items: ws });
     }
   }
   return sections;
@@ -70,7 +72,7 @@ function useNav(): { title: string; items: Item[] }[] {
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const sections = useNav();
   return (
-    <nav className="space-y-5" aria-label="Main">
+    <nav className="space-y-5" aria-label={t("Main")}>
       {sections.map((s) => (
         <div key={s.title}>
           <div className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{s.title}</div>
@@ -92,8 +94,9 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 function ThemeToggle() {
   const { theme, setTheme } = useUiStore();
   const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
+  const name = { light: t("light"), dark: t("dark"), system: t("system") };
   return (
-    <Button variant="ghost" size="icon" aria-label={`Theme: ${theme}. Switch to ${next}`} title={`Theme: ${theme}`} onClick={() => setTheme(next)}>
+    <Button variant="ghost" size="icon" aria-label={t("Theme: {theme}. Switch to {next}", { theme: name[theme], next: name[next] })} title={t("Theme: {theme}", { theme: name[theme] })} onClick={() => setTheme(next)}>
       {theme === "dark" ? <Moon /> : theme === "light" ? <Sun /> : <Monitor />}
     </Button>
   );
@@ -106,7 +109,7 @@ export function NetworkIndicator() {
   return (
     <Badge tone={online ? "info" : "warning"} className="gap-1.5" aria-live="polite">
       {!online && <WifiOff />}
-      {online ? `Syncing ${pending} pending` : pending ? `Offline · ${pending} pending` : "Offline"}
+      {online ? t("Syncing {n} pending", { n: pending }) : pending ? t("Offline · {n} pending", { n: pending }) : t("Offline")}
     </Badge>
   );
 }
@@ -116,7 +119,7 @@ function Bellbutton() {
   const { data } = useGet<AppNotification[]>("/notifications/", { unread: true }, { refetchInterval: 60_000 });
   const n = data?.length ?? 0;
   return (
-    <Button variant="ghost" size="icon" aria-label={`Notifications (${n} unread)`} onClick={() => nav("/app/notifications")} className="relative">
+    <Button variant="ghost" size="icon" aria-label={t("Notifications ({n} unread)", { n })} onClick={() => nav("/app/notifications")} className="relative">
       <Bell />
       {n > 0 && <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{n > 9 ? "9+" : n}</span>}
     </Button>
@@ -127,13 +130,13 @@ function BottomNav() {
   const me = useAuthStore((s) => s.me);
   if (!me?.employee_id) return null;
   const items = [
-    { to: "/app", label: "Home", icon: <Gauge />, end: true },
-    { to: "/app/attendance", label: "History", icon: <ClipboardList /> },
-    { to: "/app/schedule", label: "Schedule", icon: <CalendarDays /> },
-    { to: "/app/profile", label: "Profile", icon: <User /> },
+    { to: "/app", label: t("Home"), icon: <Gauge />, end: true },
+    { to: "/app/attendance", label: t("History"), icon: <ClipboardList /> },
+    { to: "/app/schedule", label: t("Schedule"), icon: <CalendarDays /> },
+    { to: "/app/profile", label: t("Profile"), icon: <User /> },
   ];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Quick">
+    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label={t("Quick")}>
       {items.map((i) => (
         <NavLink key={i.to} to={i.to} end={i.end} className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground [&_svg]:size-5", isActive && "text-primary")}>
           {i.icon}{i.label}
@@ -157,15 +160,15 @@ export function AppShell() {
         <div className="flex-1 overflow-y-auto px-3 pb-6"><NavList /></div>
         <div className="border-t p-4 text-xs text-muted-foreground">
           <div className="truncate font-semibold text-foreground">{me?.organization_name}</div>
-          <div>{me?.subscription_plan} plan · {me?.organization_timezone}</div>
+          <div>{t("{plan} plan", { plan: me?.subscription_plan ?? "" })} · {me?.organization_timezone}</div>
         </div>
       </aside>
 
       {sidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t("Navigation")}>
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-card shadow-xl">
-            <div className="flex h-16 items-center justify-between px-5"><Logo /><Button variant="ghost" size="icon" aria-label="Close menu" onClick={() => setSidebarOpen(false)}><X /></Button></div>
+            <div className="flex h-16 items-center justify-between px-5"><Logo /><Button variant="ghost" size="icon" aria-label={t("Close menu")} onClick={() => setSidebarOpen(false)}><X /></Button></div>
             <div className="flex-1 overflow-y-auto px-3 pb-6"><NavList onNavigate={() => setSidebarOpen(false)} /></div>
           </div>
         </div>
@@ -173,15 +176,16 @@ export function AppShell() {
 
       <div className="min-w-0">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-card/85 px-4 backdrop-blur sm:px-6">
-          <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu" onClick={() => setSidebarOpen(true)}><Menu /></Button>
+          <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("Open menu")} onClick={() => setSidebarOpen(true)}><Menu /></Button>
           <div className="lg:hidden"><Logo compact /></div>
           <div className="ml-auto flex items-center gap-1.5">
             <NetworkIndicator />
+            <LanguageSwitcher />
             <ThemeToggle />
             <Bellbutton />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="ml-1 flex items-center gap-2 rounded-full p-0.5 pr-2 hover:bg-muted cursor-pointer" aria-label="Account menu">
+                <button className="ml-1 flex items-center gap-2 rounded-full p-0.5 pr-2 hover:bg-muted cursor-pointer" aria-label={t("Account menu")}>
                   <span className="grid size-8 place-items-center rounded-full bg-primary/15 text-sm font-bold text-primary">{me?.full_name.slice(0, 1)}</span>
                   <span className="hidden text-sm font-medium sm:block">{me?.full_name.split(" ")[0]}</span>
                 </button>
@@ -189,11 +193,11 @@ export function AppShell() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{me?.email}<br />{me && ROLE_LABEL[me.role]} · {me?.organization_name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {me?.employee_id && <DropdownMenuItem onSelect={() => nav("/app/profile")}><User />Profile & location</DropdownMenuItem>}
-                <DropdownMenuItem onSelect={() => nav("/app/notifications")}><Bell />Notifications</DropdownMenuItem>
-                {isAdmin(me) && <DropdownMenuItem onSelect={() => nav("/app/admin/settings")}><Building2 />Organization settings</DropdownMenuItem>}
+                {me?.employee_id && <DropdownMenuItem onSelect={() => nav("/app/profile")}><User />{t("Profile & location")}</DropdownMenuItem>}
+                <DropdownMenuItem onSelect={() => nav("/app/notifications")}><Bell />{t("Notifications")}</DropdownMenuItem>
+                {isAdmin(me) && <DropdownMenuItem onSelect={() => nav("/app/admin/settings")}><Building2 />{t("Organization settings")}</DropdownMenuItem>}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={async () => { await logout(); nav("/login"); }}><LogOut />Sign out</DropdownMenuItem>
+                <DropdownMenuItem onSelect={async () => { await logout(); nav("/login"); }}><LogOut />{t("Sign out")}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/stores/auth";
 import type { TokenPair } from "./types";
+import { getLang, t } from "@/i18n";
 
 export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api/v1";
 
@@ -14,18 +15,18 @@ type Params = Record<string, string | number | boolean | undefined | null>;
 export function errorMessage(body: unknown, status: number): { message: string; code?: string } {
   if (body && typeof body === "object") {
     const b = body as Record<string, unknown>;
-    if ("state" in b && typeof b.message === "string") return { message: b.message, code: String(b.code ?? "") };
+    if ("state" in b && typeof b.message === "string") return { message: t(b.message), code: String(b.code ?? "") };
     const d = b.detail;
-    if (typeof d === "string") return { message: d };
+    if (typeof d === "string") return { message: t(d) };
     if (Array.isArray(d)) return { message: d.map((e: { loc?: unknown[]; msg?: string }) => `${(e.loc ?? []).slice(1).join(".")}: ${e.msg}`).join("; ") };
     if (d && typeof d === "object") {
       const o = d as Record<string, unknown>;
-      return { message: String(o.message ?? o.code ?? `Request failed (${status})`), code: o.code ? String(o.code) : undefined };
+      return { message: o.message != null ? t(String(o.message)) : o.code != null ? String(o.code) : t("Request failed ({status})", { status }), code: o.code ? String(o.code) : undefined };
     }
   }
-  if (status === 0) return { message: "Network error — check your connection." };
-  if (status === 429) return { message: "Too many requests. Please wait a moment." };
-  return { message: `Request failed (${status})` };
+  if (status === 0) return { message: t("Network error — check your connection.") };
+  if (status === 429) return { message: t("Too many requests. Please wait a moment.") };
+  return { message: t("Request failed ({status})", { status }) };
 }
 
 let refreshing: Promise<boolean> | null = null;
@@ -64,7 +65,7 @@ export async function api<T>(path: string, opts: RequestOptions = {}, retry = tr
     res = await fetch(`${API_BASE}${path}${qs}`, {
       method: opts.method ?? (opts.body !== undefined ? "POST" : "GET"),
       credentials: "include",
-      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { "Content-Type": "application/json", "Accept-Language": getLang(), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     });
   } catch {
